@@ -1,6 +1,8 @@
 --TEST--
 PSR-3 implementation: <http://www.php-fig.org/psr/psr-3/>
 Psr\Log\LoggerInterface
+--SKIPIF--
+<?php if (!extension_loaded("psr")) die("skip"); ?>
 --FILE--
 <?php
 echo ReflectionClass::export('\Psr\Log\LoggerInterface');
