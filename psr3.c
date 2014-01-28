@@ -95,6 +95,26 @@ static zend_function_entry loggerInterface_class_functions[] = {
 /* }}} */
 /* }}} */
 
+/* {{{ interface Psr\Log\Loggerinterface */
+/* {{{ public function setLogger(LoggerInterface $logger)
+   Se  logger instance on the object. */
+static PHP_METHOD(LoggerAwareInterface, setLogger)
+{
+}
+/* }}} */
+
+/* {{{ arginfo */
+ZEND_BEGIN_ARG_INFO(arginfo_loggerAwareInterface_setLogger, 0)
+    ZEND_ARG_OBJ_INFO(0, logger, Psr\\Log\\LoggerInterface, 0)
+ZEND_END_ARG_INFO()
+
+static zend_function_entry loggerAwareInterface_class_functions[] = {
+    PHP_ABSTRACT_ME(LoggerAwareInterface, setLogger, arginfo_loggerAwareInterface_setLogger)
+    PHP_FE_END
+};
+/* }}} */
+/* }}} */
+
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(psr3)
@@ -103,6 +123,9 @@ PHP_MINIT_FUNCTION(psr3)
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Log", "LoggerInterface", loggerInterface_class_functions);
     ce_loggerInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+
+    INIT_NS_CLASS_ENTRY(ce, "Psr\\Log", "LoggerAwareInterface", loggerAwareInterface_class_functions);
+    ce_loggerAwareInterface = zend_register_internal_interface(&ce TSRMLS_CC);
 
     return SUCCESS;
 }
