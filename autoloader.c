@@ -40,62 +40,49 @@ static void psr_autoloader_setter(const char* property, size_t property_length, 
 
 static char* get_filename(zval* this, const char* className)
 {
+    zval* ns = NULL;
+    char* lastPos = NULL;
     char* filename = NULL;
-    zval* namespace = NULL;
     zval* includePath = NULL;
     zval* fileExtension = NULL;
     zval* namespaceSeparator = NULL;
 
-    namespace = zend_read_property(ce_psr_autoloader, this, ZEND_STRL("namespace"), 1 TSRMLS_CC);
+    MAKE_STD_ZVAL(ns);
+
     includePath = zend_read_property(ce_psr_autoloader, this, ZEND_STRL("includePath"), 1 TSRMLS_CC);
     fileExtension = zend_read_property(ce_psr_autoloader, this, ZEND_STRL("fileExtension"), 1 TSRMLS_CC);
     namespaceSeparator = zend_read_property(ce_psr_autoloader, this, ZEND_STRL("namespaceSeparator"), 1 TSRMLS_CC);
 
-    if (ZVAL_IS_NULL(namespace)) {
-        zval* ns = NULL;
-        MAKE_STD_ZVAL(ns);
+    lastPos = strrchr(className, Z_STRVAL_P(namespaceSeparator)[0]);
+    if (lastPos != NULL) {
+        int i;
+        const char* basename = NULL;
+        const char* dirname = NULL;
+        char file[MAXPATHLEN] = "";
 
-        concat_function(ns, namespace, namespaceSeparator TSRMLS_CC);
-        if (strncmp(Z_STRVAL_P(ns), className, strlen(Z_STRVAL_P(ns))) == 0) {
-            char* lastPos = NULL;
+        lastPos[0] = '\0';
+        dirname = className;
 
-            // work around for PHP 5.3.0 - 5.3.2 https://bugs.php.net/50731
-            if (className[0] == '\\') {
-                className++;
+        for (i = 1; lastPos[i]; i++) {
+            if (lastPos[i] == Z_STRVAL_P(namespaceSeparator)[0]) {
+                lastPos[i] = DEFAULT_SLASH;
             }
+        }
+        basename = lastPos + 1;
 
-            lastPos = strrchr(className, Z_STRVAL_P(namespaceSeparator)[0]);
-            if (lastPos != NULL) {
-                int i;
-                const char* basename = NULL;
-                const char* dirname = NULL;
-                char file[MAXPATHLEN] = "";
+        {
+            const char sep[2] = {DEFAULT_SLASH, '\0'};
 
-                lastPos[0] = '\0';
-                dirname = className;
+            filename = emalloc(MAXPATHLEN * sizeof(*filename));
+            filename[0] = '\0';
 
-                for (i = 1; lastPos[i]; i++) {
-                    if (lastPos[i] == Z_STRVAL_P(namespaceSeparator)[0]) {
-                        lastPos[i] = DEFAULT_SLASH;
-                    }
-                }
-                basename = lastPos + 1;
-
-                {
-                    const char sep[2] = {DEFAULT_SLASH, '\0'};
-
-                    filename = emalloc(MAXPATHLEN * sizeof(*filename));
-                    filename[0] = '\0';
-
-                    if (!ZVAL_IS_NULL(includePath)) {
-                        snprintf(filename, MAXPATHLEN, "%s%s", includePath, sep);
-                    }
-                    if (dirname[0] != '\0') {
-                        snprintf(filename, MAXPATHLEN, "%s%s%s", filename, dirname, sep);
-                    }
-                    snprintf(filename, MAXPATHLEN, "%s%s%s", filename, basename, Z_STRVAL_P(fileExtension));
-                }
+            if (!ZVAL_IS_NULL(includePath)) {
+                snprintf(filename, MAXPATHLEN, "%s%s", includePath, sep);
             }
+            if (dirname[0] != '\0') {
+                snprintf(filename, MAXPATHLEN, "%s%s%s", filename, dirname, sep);
+            }
+            snprintf(filename, MAXPATHLEN, "%s%s%s", filename, basename, Z_STRVAL_P(fileExtension));
         }
     }
     return filename;
