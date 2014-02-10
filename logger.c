@@ -2,7 +2,7 @@
 #    include "config.h"
 #endif
 
-#include "psr3.h"
+#include "logger.h"
 
 /* {{{ interface Psr\Log\Loggerinterface */
 /* {{{ public void emergency($message, array $context = array())
@@ -116,7 +116,7 @@ static zend_function_entry loggerAwareInterface_class_functions[] = {
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION */
-PHP_MINIT_FUNCTION(psr3)
+PHP_MINIT_FUNCTION(psr_logger)
 {
     zend_class_entry ce;
 

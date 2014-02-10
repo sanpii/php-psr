@@ -2,7 +2,7 @@
 #    include "config.h"
 #endif
 
-#include "psr0.h"
+#include "autoloader.h"
 #include "Zend/zend_alloc.h"
 #include "Zend/zend_interfaces.h"
 
@@ -279,7 +279,7 @@ static zend_function_entry autoloader_class_functions[] = {
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION */
-PHP_MINIT_FUNCTION(psr0)
+PHP_MINIT_FUNCTION(psr_autoloader)
 {
     zend_class_entry ce;
 
