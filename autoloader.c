@@ -59,6 +59,11 @@ static char* get_filename(zval* this, const char* className)
         if (strncmp(Z_STRVAL_P(ns), className, strlen(Z_STRVAL_P(ns))) == 0) {
             char* lastPos = NULL;
 
+            // work around for PHP 5.3.0 - 5.3.2 https://bugs.php.net/50731
+            if (className[0] == '\\') {
+                className++;
+            }
+
             lastPos = strrchr(className, Z_STRVAL_P(namespaceSeparator)[0]);
             if (lastPos != NULL) {
                 int i;
@@ -94,6 +99,30 @@ static char* get_filename(zval* this, const char* className)
         }
     }
     return filename;
+}
+
+static zval* call_function(const char* name, zval** params[], int param_count)
+{
+    zval fname;
+    zval* retval = NULL;
+    zend_fcall_info finfo;
+    zend_fcall_info_cache fcache;
+
+    ZVAL_STRING(&fname, "spl_autoload_register", 0);
+    if (zend_fcall_info_init(&fname, IS_CALLABLE_STRICT, &finfo, &fcache, NULL, NULL TSRMLS_CC) == FAILURE) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "WTF??? Can't find the spl_autoload_register() function!");
+        return retval;
+    }
+
+    finfo.param_count = param_count;
+    finfo.params = params;
+    finfo.retval_ptr_ptr = &retval;
+
+    if (zend_call_function(&finfo, &fcache TSRMLS_CC) == FAILURE) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed calling %s()", name);
+    }
+
+    return retval;
 }
 
 /* {{{ interface Psr\Autoloader */
@@ -154,12 +183,22 @@ static PHP_METHOD(Autoloader, getFileExtension)
 }
 /* }}} */
 
-/* {{{ public void register()
+/* {{{ public void register($prepend = false)
    Installs this class loader on the SPL autoload stack. */
 static PHP_METHOD(Autoloader, register)
 {
     zval* this = NULL;
     zval* method = NULL;
+    zval* prepend = NULL;
+    zval* do_throw = NULL;
+
+    MAKE_STD_ZVAL(prepend);
+    ZVAL_BOOL(prepend, 0);
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &Z_LVAL_P(prepend)) == FAILURE) {
+        zval_ptr_dtor(&prepend), prepend = NULL;
+        RETURN_FALSE;
+    }
 
     this = getThis();
 
@@ -170,9 +209,22 @@ static PHP_METHOD(Autoloader, register)
     add_next_index_zval(method, this);
     add_next_index_string(method, estrdup("loadClass"), 0);
 
-    zend_call_method_with_1_params(NULL, NULL, NULL, "spl_autoload_register", NULL, method);
+    MAKE_STD_ZVAL(do_throw);
+    ZVAL_BOOL(do_throw, 0);
 
-    zval_ptr_dtor(&method);
+    {
+        zval* retval = NULL;
+        zval** params[] = {&method, &do_throw, &prepend};
+
+        retval = call_function("spl_autoload_register", params, 3);
+        if (retval) {
+            zval_ptr_dtor(&retval);
+        }
+    }
+
+    zval_ptr_dtor(&do_throw), do_throw = NULL;
+    zval_ptr_dtor(&prepend), prepend = NULL;
+    zval_ptr_dtor(&method), method = NULL;
 }
 /* }}} */
 
@@ -194,7 +246,7 @@ static PHP_METHOD(Autoloader, unregister)
 
     zend_call_method_with_1_params(NULL, NULL, NULL, "spl_autoload_unregister", NULL, method);
 
-    zval_ptr_dtor(&method);
+    zval_ptr_dtor(&method), method = NULL;
 }
 /* }}} */
 
@@ -224,6 +276,7 @@ static PHP_METHOD(Autoloader, findFile)
     }
     RETURN_FALSE;
 }
+/* }}} */
 
 /* {{{ public void loadClass($className)
    Loads the given class or interface. */
@@ -246,7 +299,7 @@ static PHP_METHOD(Autoloader, loadClass)
         .filename = filename,
         .opened_path = NULL,
         .free_filename = 0,
-        .type = ZEND_HANDLE_FILENAME
+        .type = ZEND_HANDLE_FILENAME,
     };
 
     zend_execute_scripts(ZEND_INCLUDE TSRMLS_CC, NULL, 1, &fh);
