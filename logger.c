@@ -95,7 +95,7 @@ static zend_function_entry loggerInterface_class_functions[] = {
 /* }}} */
 /* }}} */
 
-/* {{{ interface Psr\Log\Loggerinterface */
+/* {{{ interface Psr\Log\LoggerAwareInterface */
 /* {{{ public function setLogger(LoggerInterface $logger)
    Se  logger instance on the object. */
 static PHP_METHOD(LoggerAwareInterface, setLogger)
