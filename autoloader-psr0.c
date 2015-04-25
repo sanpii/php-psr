@@ -2,11 +2,11 @@
 #    include "config.h"
 #endif
 
-#include "autoloader.h"
+#include "autoloader-psr0.h"
 #include "Zend/zend_alloc.h"
 #include "Zend/zend_interfaces.h"
 
-static zval* psr_autoloader_getter(const char* property, size_t property_length, INTERNAL_FUNCTION_PARAMETERS)
+static zval* psr_autoloader_psr0_getter(const char* property, size_t property_length, INTERNAL_FUNCTION_PARAMETERS)
 {
     zval* this = NULL;
     zval* value = NULL;
@@ -18,12 +18,12 @@ static zval* psr_autoloader_getter(const char* property, size_t property_length,
 
     this = getThis();
 
-    value = zend_read_property(ce_psr_autoloader, this, property, property_length, 1 TSRMLS_CC);
+    value = zend_read_property(ce_psr_autoloader_psr0, this, property, property_length, 1 TSRMLS_CC);
 
     return value;
 }
 
-static void psr_autoloader_setter(const char* property, size_t property_length, INTERNAL_FUNCTION_PARAMETERS)
+static void psr_autoloader_psr0_setter(const char* property, size_t property_length, INTERNAL_FUNCTION_PARAMETERS)
 {
     zval* this = NULL;
     zval* value = NULL;
@@ -35,7 +35,7 @@ static void psr_autoloader_setter(const char* property, size_t property_length, 
 
     this = getThis();
 
-    zend_update_property(ce_psr_autoloader, this, property, property_length, value);
+    zend_update_property(ce_psr_autoloader_psr0, this, property, property_length, value);
 }
 
 static char* get_filename(zval* this, const char* className)
@@ -49,9 +49,9 @@ static char* get_filename(zval* this, const char* className)
 
     MAKE_STD_ZVAL(ns);
 
-    includePath = zend_read_property(ce_psr_autoloader, this, ZEND_STRL("includePath"), 1 TSRMLS_CC);
-    fileExtension = zend_read_property(ce_psr_autoloader, this, ZEND_STRL("fileExtension"), 1 TSRMLS_CC);
-    namespaceSeparator = zend_read_property(ce_psr_autoloader, this, ZEND_STRL("namespaceSeparator"), 1 TSRMLS_CC);
+    includePath = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("includePath"), 1 TSRMLS_CC);
+    fileExtension = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("fileExtension"), 1 TSRMLS_CC);
+    namespaceSeparator = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("namespaceSeparator"), 1 TSRMLS_CC);
 
     lastPos = strrchr(className, Z_STRVAL_P(namespaceSeparator)[0]);
     if (lastPos != NULL) {
@@ -112,67 +112,67 @@ static zval* call_function(const char* name, zval** params[], int param_count)
     return retval;
 }
 
-/* {{{ class Psr\Autoloader */
+/* {{{ class Psr\Autoloader\Psr0 */
 /* {{{ public void setNamespaceSeparator($namespaceSeparator)
    Sets the namespace separator used by classes in the namespace of this class loader. */
-static PHP_METHOD(Autoloader, setNamespaceSeparator)
+static PHP_METHOD(Psr0, setNamespaceSeparator)
 {
-    psr_autoloader_setter(ZEND_STRL("namespaceSeparator"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    psr_autoloader_psr0_setter(ZEND_STRL("namespaceSeparator"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
 
 /* {{{ public void getNamespaceSeparator()
    Gets the namespace seperator used by classes in the namespace of this class loader. */
-static PHP_METHOD(Autoloader, getNamespaceSeparator)
+static PHP_METHOD(Psr0, getNamespaceSeparator)
 {
     zval *value = NULL;
 
-    value = psr_autoloader_getter(ZEND_STRL("namespaceSeparator"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    value = psr_autoloader_psr0_getter(ZEND_STRL("namespaceSeparator"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
     RETURN_ZVAL(value, 1, 0);
 }
 /* }}} */
 
 /* {{{ public void setIncludePath($includePath)
    Sets the base include path for all class files in the namespace of this class loader. */
-static PHP_METHOD(Autoloader, setIncludePath)
+static PHP_METHOD(Psr0, setIncludePath)
 {
-    psr_autoloader_setter(ZEND_STRL("includePath"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    psr_autoloader_psr0_setter(ZEND_STRL("includePath"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
 
 /* {{{ public void getIncludePath()
    Gets the base include path for all class files in the namespace of this class loader. */
-static PHP_METHOD(Autoloader, getIncludePath)
+static PHP_METHOD(Psr0, getIncludePath)
 {
     zval *value = NULL;
 
-    value = psr_autoloader_getter(ZEND_STRL("includePath"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    value = psr_autoloader_psr0_getter(ZEND_STRL("includePath"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
     RETURN_ZVAL(value, 1, 0);
 }
 /* }}} */
 
 /* {{{ public void setFileExtension($fileExtension)
    Sets the file extension of class files in the namespace of this class loader.*/
-static PHP_METHOD(Autoloader, setFileExtension)
+static PHP_METHOD(Psr0, setFileExtension)
 {
-    psr_autoloader_setter(ZEND_STRL("fileExtension"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    psr_autoloader_psr0_setter(ZEND_STRL("fileExtension"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
 
 /* {{{ public void getFileExtension()
    Gets the file extension of class files in the namespace of this class loader. */
-static PHP_METHOD(Autoloader, getFileExtension)
+static PHP_METHOD(Psr0, getFileExtension)
 {
     zval *value = NULL;
 
-    value = psr_autoloader_getter(ZEND_STRL("fileExtension"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    value = psr_autoloader_psr0_getter(ZEND_STRL("fileExtension"), INTERNAL_FUNCTION_PARAM_PASSTHRU);
     RETURN_ZVAL(value, 1, 0);
 }
 /* }}} */
 
 /* {{{ public void register($prepend = false)
    Installs this class loader on the SPL autoload stack. */
-static PHP_METHOD(Autoloader, register)
+static PHP_METHOD(Psr0, register)
 {
     zval* this = NULL;
     zval* method = NULL;
@@ -216,8 +216,8 @@ static PHP_METHOD(Autoloader, register)
 /* }}} */
 
 /* {{{ public void unregister()
-   Uninstalls this class loader from the SPL autoloader stack. */
-static PHP_METHOD(Autoloader, unregister)
+   Uninstalls this class loader from the SPL autoloader_psr0 stack. */
+static PHP_METHOD(Psr0, unregister)
 {
     zval* this = NULL;
     zval* method = NULL;
@@ -239,7 +239,7 @@ static PHP_METHOD(Autoloader, unregister)
 
 /* {{{ public string|false findFile($className)
    Finds the path to the file where the class is defined. */
-static PHP_METHOD(Autoloader, findFile)
+static PHP_METHOD(Psr0, findFile)
 {
     zval* this = NULL;
     char* className = NULL;
@@ -267,7 +267,7 @@ static PHP_METHOD(Autoloader, findFile)
 
 /* {{{ public void loadClass($className)
    Loads the given class or interface. */
-static PHP_METHOD(Autoloader, loadClass)
+static PHP_METHOD(Psr0, loadClass)
 {
     zval* this = NULL;
     zval* file = NULL;
@@ -295,41 +295,41 @@ static PHP_METHOD(Autoloader, loadClass)
 /* }}} */
 
 /* {{{ arginfo */
-ZEND_BEGIN_ARG_INFO(arginfo_autoloader_setter, 0)
+ZEND_BEGIN_ARG_INFO(arginfo_autoloader_psr0_setter, 0)
     ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO(arginfo_autoloader_load, 0)
+ZEND_BEGIN_ARG_INFO(arginfo_autoloader_psr0_load, 0)
     ZEND_ARG_INFO(0, className)
 ZEND_END_ARG_INFO()
 
-static zend_function_entry autoloader_class_functions[] = {
-    PHP_ME(Autoloader, setNamespaceSeparator, arginfo_autoloader_setter, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, getNamespaceSeparator, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, setIncludePath, arginfo_autoloader_setter, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, getIncludePath, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, setFileExtension, arginfo_autoloader_setter, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, getFileExtension, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, register, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, unregister, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, findFile, arginfo_autoloader_load, ZEND_ACC_PUBLIC)
-    PHP_ME(Autoloader, loadClass, arginfo_autoloader_load, ZEND_ACC_PUBLIC)
+static zend_function_entry autoloader_psr0_class_functions[] = {
+    PHP_ME(Psr0, setNamespaceSeparator, arginfo_autoloader_psr0_setter, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, getNamespaceSeparator, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, setIncludePath, arginfo_autoloader_psr0_setter, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, getIncludePath, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, setFileExtension, arginfo_autoloader_psr0_setter, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, getFileExtension, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, register, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, unregister, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, findFile, arginfo_autoloader_psr0_load, ZEND_ACC_PUBLIC)
+    PHP_ME(Psr0, loadClass, arginfo_autoloader_psr0_load, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 /* }}} */
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION */
-PHP_MINIT_FUNCTION(psr_autoloader)
+PHP_MINIT_FUNCTION(psr_autoloader_psr0)
 {
     zend_class_entry ce;
 
-    INIT_NS_CLASS_ENTRY(ce, "Psr", "Autoloader", autoloader_class_functions);
-    ce_psr_autoloader = zend_register_internal_class(&ce TSRMLS_CC);
+    INIT_NS_CLASS_ENTRY(ce, "Psr\\Autoloader", "Psr0", autoloader_psr0_class_functions);
+    ce_psr_autoloader_psr0 = zend_register_internal_class(&ce TSRMLS_CC);
 
-    zend_declare_property_string(ce_psr_autoloader, ZEND_STRL("namespaceSeparator"), "\\", ZEND_ACC_PRIVATE);
-    zend_declare_property_null(ce_psr_autoloader, ZEND_STRL("includePath"), ZEND_ACC_PRIVATE);
-    zend_declare_property_string(ce_psr_autoloader, ZEND_STRL("fileExtension"), ".php", ZEND_ACC_PRIVATE);
+    zend_declare_property_string(ce_psr_autoloader_psr0, ZEND_STRL("namespaceSeparator"), "\\", ZEND_ACC_PRIVATE);
+    zend_declare_property_null(ce_psr_autoloader_psr0, ZEND_STRL("includePath"), ZEND_ACC_PRIVATE);
+    zend_declare_property_string(ce_psr_autoloader_psr0, ZEND_STRL("fileExtension"), ".php", ZEND_ACC_PRIVATE);
 
     return SUCCESS;
 }

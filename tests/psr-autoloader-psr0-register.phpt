@@ -1,13 +1,13 @@
 --TEST--
 PSR-0 implementation: <http://www.php-fig.org/psr/psr-0/>
-Psr\Autoloader
+Psr\Autoloader\Psr0
 --SKIPIF--
 <?php if (!extension_loaded("psr")) die("skip"); ?>
 --FILE--
 <?php
 spl_autoload_register(function () {});
 
-$al = new Psr\Autoloader();
+$al = new Psr\Autoloader\Psr0();
 $al->register();
 var_dump(spl_autoload_functions());
 $al->unregister();
@@ -22,12 +22,12 @@ array(2) {
   [1]=>
   array(2) {
     [0]=>
-    object(Psr\Autoloader)#2 (3) {
-      ["namespaceSeparator":"Psr\Autoloader":private]=>
+    object(Psr\Autoloader\Psr0)#2 (3) {
+      ["namespaceSeparator":"Psr\Autoloader\Psr0":private]=>
       string(1) "\"
-      ["includePath":"Psr\Autoloader":private]=>
+      ["includePath":"Psr\Autoloader\Psr0":private]=>
       NULL
-      ["fileExtension":"Psr\Autoloader":private]=>
+      ["fileExtension":"Psr\Autoloader\Psr0":private]=>
       string(4) ".php"
     }
     [1]=>
@@ -43,12 +43,12 @@ array(2) {
   [0]=>
   array(2) {
     [0]=>
-    object(Psr\Autoloader)#2 (3) {
-      ["namespaceSeparator":"Psr\Autoloader":private]=>
+    object(Psr\Autoloader\Psr0)#2 (3) {
+      ["namespaceSeparator":"Psr\Autoloader\Psr0":private]=>
       string(1) "\"
-      ["includePath":"Psr\Autoloader":private]=>
+      ["includePath":"Psr\Autoloader\Psr0":private]=>
       NULL
-      ["fileExtension":"Psr\Autoloader":private]=>
+      ["fileExtension":"Psr\Autoloader\Psr0":private]=>
       string(4) ".php"
     }
     [1]=>
