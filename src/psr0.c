@@ -2,7 +2,7 @@
 #    include "config.h"
 #endif
 
-#include "autoloader-psr0.h"
+#include "psr0.h"
 #include "Zend/zend_alloc.h"
 #include "Zend/zend_interfaces.h"
 

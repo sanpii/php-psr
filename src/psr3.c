@@ -2,7 +2,7 @@
 #    include "config.h"
 #endif
 
-#include "logger.h"
+#include "psr3.h"
 
 /* {{{ interface Psr\Log\Loggerinterface */
 ZEND_BEGIN_ARG_INFO(arginfo_loggerInterface, 0)
