@@ -8,6 +8,6 @@
 // ARG_ENABLE("psr", "enable psr support", "no");
 
 if (PHP_PSR != "no") {
-	EXTENSION("psr", "psr.c");
+	EXTENSION("psr", "src/psr.c");
 }
 

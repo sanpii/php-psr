@@ -3,7 +3,7 @@
 #endif
 
 #include "php.h"
-#include "php_psr.h"
+#include "psr.h"
 
 /* {{{ PHP_MINIT_FUNCTION
  */

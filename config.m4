@@ -5,5 +5,5 @@ PHP_ARG_ENABLE(psr, whether to enable psr support,
 [  --enable-psr           Enable psr support])
 
 if test "$PHP_PSR" != "no"; then
-  PHP_NEW_EXTENSION(psr, psr.c autoloader-psr0.c logger.c, $ext_shared)
+  PHP_NEW_EXTENSION(psr, src/psr.c src/autoloader-psr0.c src/logger.c, $ext_shared)
 fi
