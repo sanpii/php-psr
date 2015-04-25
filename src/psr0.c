@@ -59,7 +59,6 @@ static char* get_filename(zval* this, const char* className)
         int i;
         const char* basename = NULL;
         const char* dirname = NULL;
-        char file[MAXPATHLEN] = "";
 
         lastPos[0] = '\0';
         dirname = className;
@@ -247,7 +246,6 @@ static PHP_METHOD(Psr0, findFile)
 static PHP_METHOD(Psr0, loadClass)
 {
     zval* this = NULL;
-    zval* file = NULL;
     char* filename = NULL;
     char* className = NULL;
     size_t className_length;

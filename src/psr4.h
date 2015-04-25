@@ -1,0 +1,8 @@
+#ifndef PHP_PSR_AUTOLOADER_PSR4_H
+#define PHP_PSR_AUTOLOADER_PSR4_H
+
+#include "php.h"
+
+PHP_MINIT_FUNCTION(psr4);
+
+#endif /* PHP_PSR_AUTOLOADER_PSR4_H */
