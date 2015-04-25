@@ -112,7 +112,7 @@ static zval* call_function(const char* name, zval** params[], int param_count)
     return retval;
 }
 
-/* {{{ interface Psr\Autoloader */
+/* {{{ class Psr\Autoloader */
 /* {{{ public void setNamespaceSeparator($namespaceSeparator)
    Sets the namespace separator used by classes in the namespace of this class loader. */
 static PHP_METHOD(Autoloader, setNamespaceSeparator)
@@ -298,6 +298,7 @@ static PHP_METHOD(Autoloader, loadClass)
 ZEND_BEGIN_ARG_INFO(arginfo_autoloader_setter, 0)
     ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO(arginfo_autoloader_load, 0)
     ZEND_ARG_INFO(0, className)
 ZEND_END_ARG_INFO()
