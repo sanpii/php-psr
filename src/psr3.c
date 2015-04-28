@@ -45,12 +45,13 @@ static zend_function_entry loggerAwareInterface_class_functions[] = {
 PHP_MINIT_FUNCTION(psr3)
 {
     zend_class_entry ce;
+    zend_class_entry *ce_psr_logLevel;
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Log", "LoggerInterface", loggerInterface_class_functions);
-    ce_psr_loggerInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_register_internal_interface(&ce TSRMLS_CC);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Log", "LoggerAwareInterface", loggerAwareInterface_class_functions);
-    ce_psr_loggerAwareInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_register_internal_interface(&ce TSRMLS_CC);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Log", "LogLevel", NULL);
     ce_psr_logLevel = zend_register_internal_class(&ce TSRMLS_CC);

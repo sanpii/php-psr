@@ -6,11 +6,12 @@
 #include "Zend/zend_alloc.h"
 #include "Zend/zend_interfaces.h"
 
+static zend_class_entry *ce_psr_autoloader_psr0;
+
 static zval* psr_autoloader_psr0_getter(const char* property, size_t property_length, INTERNAL_FUNCTION_PARAMETERS)
 {
     zval* this = NULL;
     zval* value = NULL;
-    zend_class_entry* ce = NULL;
 
     if (zend_parse_parameters_none() == FAILURE) {
         return NULL;
@@ -27,7 +28,6 @@ static void psr_autoloader_psr0_setter(const char* property, size_t property_len
 {
     zval* this = NULL;
     zval* value = NULL;
-    zend_class_entry* ce = NULL;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &value) == FAILURE) {
         return;
