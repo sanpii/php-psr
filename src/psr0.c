@@ -320,7 +320,7 @@ static zend_function_entry autoloader_psr0_class_functions[] = {
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION */
-PHP_MINIT_FUNCTION(psr_autoloader_psr0)
+PHP_MINIT_FUNCTION(psr0)
 {
     zend_class_entry ce;
 

@@ -42,7 +42,7 @@ static zend_function_entry loggerAwareInterface_class_functions[] = {
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION */
-PHP_MINIT_FUNCTION(psr_logger)
+PHP_MINIT_FUNCTION(psr3)
 {
     zend_class_entry ce;
 
