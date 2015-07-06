@@ -157,7 +157,7 @@ static PHP_METHOD(Psr0, register)
     zval* do_throw = NULL;
 
     MAKE_STD_ZVAL(prepend);
-    ZVAL_BOOL(prepend, 0);
+    ZVAL_FALSE(prepend);
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &Z_LVAL_P(prepend)) == FAILURE) {
         zval_ptr_dtor(&prepend), prepend = NULL;
@@ -174,7 +174,7 @@ static PHP_METHOD(Psr0, register)
     add_next_index_string(method, estrdup("loadClass"), 0);
 
     MAKE_STD_ZVAL(do_throw);
-    ZVAL_BOOL(do_throw, 0);
+    ZVAL_FALSE(do_throw);
 
     {
         zval* retval = NULL;
