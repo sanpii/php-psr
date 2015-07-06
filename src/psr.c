@@ -44,6 +44,42 @@ zend_module_entry psr_module_entry = {
 };
 /* }}} */
 
+void psr_require(const char* filename)
+{
+    zend_file_handle fh = {
+        .filename = filename,
+        .opened_path = NULL,
+        .free_filename = 0,
+        .type = ZEND_HANDLE_FILENAME,
+    };
+
+    zend_execute_scripts(ZEND_REQUIRE TSRMLS_CC, NULL, 1, &fh);
+}
+
+zval* psr_call_function(const char* name, zval** params[], int param_count)
+{
+    zval fname;
+    zval* retval = NULL;
+    zend_fcall_info finfo;
+    zend_fcall_info_cache fcache;
+
+    ZVAL_STRING(&fname, name, 0);
+    if (zend_fcall_info_init(&fname, IS_CALLABLE_STRICT, &finfo, &fcache, NULL, NULL TSRMLS_CC) == FAILURE) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "WTF??? Can't find the spl_autoload_register() function!");
+        return retval;
+    }
+
+    finfo.param_count = param_count;
+    finfo.params = params;
+    finfo.retval_ptr_ptr = &retval;
+
+    if (zend_call_function(&finfo, &fcache TSRMLS_CC) == FAILURE) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed calling %s()", name);
+    }
+
+    return retval;
+}
+
 #ifdef COMPILE_DL_PSR
 ZEND_GET_MODULE(psr)
 #endif

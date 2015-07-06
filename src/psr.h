@@ -24,4 +24,7 @@ extern zend_module_entry psr_module_entry;
 #    define PSR_G(v) (psr_globals.v)
 #endif
 
+void psr_require(const char* filename);
+zval* psr_call_function(const char* name, zval** params[], int param_count);
+
 #endif /* PHP_PSR_H */

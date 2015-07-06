@@ -3,6 +3,7 @@
 #endif
 
 #include "psr0.h"
+#include "psr.h"
 #include "Zend/zend_alloc.h"
 #include "Zend/zend_interfaces.h"
 
@@ -86,30 +87,6 @@ static char* get_filename(zval* this, const char* className)
         }
     }
     return filename;
-}
-
-static zval* call_function(const char* name, zval** params[], int param_count)
-{
-    zval fname;
-    zval* retval = NULL;
-    zend_fcall_info finfo;
-    zend_fcall_info_cache fcache;
-
-    ZVAL_STRING(&fname, "spl_autoload_register", 0);
-    if (zend_fcall_info_init(&fname, IS_CALLABLE_STRICT, &finfo, &fcache, NULL, NULL TSRMLS_CC) == FAILURE) {
-        php_error_docref(NULL TSRMLS_CC, E_WARNING, "WTF??? Can't find the spl_autoload_register() function!");
-        return retval;
-    }
-
-    finfo.param_count = param_count;
-    finfo.params = params;
-    finfo.retval_ptr_ptr = &retval;
-
-    if (zend_call_function(&finfo, &fcache TSRMLS_CC) == FAILURE) {
-        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed calling %s()", name);
-    }
-
-    return retval;
 }
 
 /* {{{ class Psr\Autoloader\Psr0 */
@@ -203,7 +180,7 @@ static PHP_METHOD(Psr0, register)
         zval* retval = NULL;
         zval** params[] = {&method, &do_throw, &prepend};
 
-        retval = call_function("spl_autoload_register", params, 3);
+        retval = psr_call_function("spl_autoload_register", params, 3);
         if (retval) {
             zval_ptr_dtor(&retval);
         }
@@ -276,20 +253,12 @@ static PHP_METHOD(Psr0, loadClass)
     size_t className_length;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &className, &className_length) == FAILURE) {
-        RETURN_FALSE;
+        return;
     }
 
     this = getThis();
     filename = get_filename(this, className);
-
-    zend_file_handle fh = {
-        .filename = filename,
-        .opened_path = NULL,
-        .free_filename = 0,
-        .type = ZEND_HANDLE_FILENAME,
-    };
-
-    zend_execute_scripts(ZEND_INCLUDE TSRMLS_CC, NULL, 1, &fh);
+    psr_require(filename);
     efree(filename), filename = NULL;
 }
 /* }}} */
