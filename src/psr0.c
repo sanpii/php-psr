@@ -20,7 +20,7 @@ static zval* psr_autoloader_psr0_getter(const char* property, size_t property_le
 
     this = getThis();
 
-    value = zend_read_property(ce_psr_autoloader_psr0, this, property, property_length, 1);
+    value = zend_read_property(ce_psr_autoloader_psr0, this, property, property_length, 1, NULL);
 
     return value;
 }
@@ -39,20 +39,17 @@ static void psr_autoloader_psr0_setter(const char* property, size_t property_len
     zend_update_property(ce_psr_autoloader_psr0, this, property, property_length, value);
 }
 
-static char* get_filename(zval* this, const zend_string className)
+static char* get_filename(zval* this, zend_string* className)
 {
-    zval* ns = NULL;
     char* lastPos = NULL;
     char* filename = NULL;
     zval* includePath = NULL;
     zval* fileExtension = NULL;
     zval* namespaceSeparator = NULL;
 
-    MAKE_STD_ZVAL(ns);
-
-    includePath = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("includePath"), 1);
-    fileExtension = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("fileExtension"), 1);
-    namespaceSeparator = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("namespaceSeparator"), 1);
+    includePath = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("includePath"), 1, NULL);
+    fileExtension = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("fileExtension"), 1, NULL);
+    namespaceSeparator = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("namespaceSeparator"), 1, NULL);
 
     lastPos = strrchr(ZSTR_VAL(className), Z_STRVAL_P(namespaceSeparator)[0]);
     if (lastPos != NULL) {
@@ -150,44 +147,36 @@ static PHP_METHOD(Psr0, getFileExtension)
    Installs this class loader on the SPL autoload stack. */
 static PHP_METHOD(Psr0, register)
 {
+    zval method;
+    zval prepend;
+    zval do_throw;
     zval* this = NULL;
-    zval* method = NULL;
-    zval* prepend = NULL;
-    zval* do_throw = NULL;
 
-    MAKE_STD_ZVAL(prepend);
-    ZVAL_FALSE(prepend);
+    ZVAL_FALSE(&prepend);
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|z", &Z_LVAL_P(prepend)) == FAILURE) {
-        zval_ptr_dtor(&prepend), prepend = NULL;
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|z", &Z_LVAL(prepend)) == FAILURE) {
         RETURN_FALSE;
     }
 
     this = getThis();
 
-    MAKE_STD_ZVAL(method);
-    array_init(method);
+    array_init(&method);
     Z_ADDREF_P(this);
 
-    add_next_index_zval(method, this);
-    add_next_index_string(method, estrdup("loadClass"), 0);
+    add_next_index_zval(&method, this);
+    add_next_index_string(&method, estrdup("loadClass"));
 
-    MAKE_STD_ZVAL(do_throw);
-    ZVAL_FALSE(do_throw);
+    ZVAL_FALSE(&do_throw);
 
     {
         zval* retval = NULL;
-        zval** params[] = {&method, &do_throw, &prepend};
+        zval params[] = {method, do_throw, prepend};
 
         retval = psr_call_function("spl_autoload_register", params, 3);
         if (retval) {
-            zval_ptr_dtor(&retval);
+            zval_ptr_dtor(retval);
         }
     }
-
-    zval_ptr_dtor(&do_throw), do_throw = NULL;
-    zval_ptr_dtor(&prepend), prepend = NULL;
-    zval_ptr_dtor(&method), method = NULL;
 }
 /* }}} */
 
@@ -195,21 +184,18 @@ static PHP_METHOD(Psr0, register)
    Uninstalls this class loader from the SPL autoloader_psr0 stack. */
 static PHP_METHOD(Psr0, unregister)
 {
+    zval method;
     zval* this = NULL;
-    zval* method = NULL;
 
     this = getThis();
 
-    MAKE_STD_ZVAL(method);
-    array_init(method);
+    array_init(&method);
     Z_ADDREF_P(this);
 
-    add_next_index_zval(method, this);
-    add_next_index_string(method, estrdup("loadClass"), 0);
+    add_next_index_zval(&method, this);
+    add_next_index_string(&method, estrdup("loadClass"));
 
-    zend_call_method_with_1_params(NULL, NULL, NULL, "spl_autoload_unregister", NULL, method);
-
-    zval_ptr_dtor(&method), method = NULL;
+    zend_call_method_with_1_params(NULL, NULL, NULL, "spl_autoload_unregister", NULL, &method);
 }
 /* }}} */
 
@@ -219,7 +205,7 @@ static PHP_METHOD(Psr0, findFile)
 {
     zval* this = NULL;
     char* filename = NULL;
-    zend_string className;
+    zend_string* className = NULL;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &className) == FAILURE) {
         RETURN_FALSE;
@@ -229,14 +215,12 @@ static PHP_METHOD(Psr0, findFile)
 
     filename = get_filename(this, className);
     if (filename != NULL) {
-        zval* file = NULL;
-        MAKE_STD_ZVAL(file);
-
-        ZVAL_STRING(file, filename, 0);
-        RETURN_ZVAL(file, 0, NULL);
+        RETVAL_STRING(filename);
         efree(filename), filename = NULL;
     }
-    RETURN_FALSE;
+    else {
+        RETVAL_NULL();
+    }
 }
 /* }}} */
 
@@ -246,7 +230,7 @@ static PHP_METHOD(Psr0, loadClass)
 {
     zval* this = NULL;
     char* filename = NULL;
-    zend_string className;
+    zend_string* className;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &className) == FAILURE) {
         return;

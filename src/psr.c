@@ -60,7 +60,7 @@ void psr_require(const char* filename)
     zend_execute_scripts(ZEND_REQUIRE, NULL, 1, &fh);
 }
 
-zval* psr_call_function(const char* name, zval** params[], int param_count)
+zval* psr_call_function(const char* name, zval params[], int param_count)
 {
     zval fname;
     zval* retval = NULL;
@@ -75,7 +75,7 @@ zval* psr_call_function(const char* name, zval** params[], int param_count)
 
     finfo.param_count = param_count;
     finfo.params = params;
-    finfo.retval_ptr_ptr = &retval;
+    finfo.retval = retval;
 
     if (zend_call_function(&finfo, &fcache) == FAILURE) {
         php_error_docref(NULL, E_WARNING, "Failed calling %s()", name);

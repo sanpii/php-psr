@@ -7,33 +7,47 @@
 
 static zend_class_entry *ce_psr_autoloader_psr4;
 
-static char* get_prefix(zval* this, const zend_string className)
+static zend_string* psr_zend_string_sub(zend_string *s, size_t start)
 {
-    char* prefix = NULL;
-    zval* prefixes = NULL;
+    size_t len;
+    zend_string *ret;
 
-    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1);
+    len = ZSTR_LEN(s) - start;
+    ret = zend_string_alloc(len, 0);
+    memcpy(ZSTR_VAL(ret), s->val + start, len + 1);
+
+    return ret;
+}
+
+static zend_string* get_prefix(zval* this, zend_string className)
+{
+    zval* prefixes = NULL;
+    zend_string* prefix = NULL;
+
+    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1, NULL);
     if (Z_ARRVAL_P(prefixes) != NULL) {
         char* start = NULL;
         char* relative_class = NULL;
 
-        prefix = estrdup(ZSTR_VAL(className));
-        relative_class = ecalloc(sizeof(*relative_class), ZSTR_LEN(className) + 1);
+        prefix = zend_string_dup(&className, 0);
+        relative_class = ecalloc(sizeof(*relative_class), ZSTR_LEN(&className) + 1);
 
-        while ((start = strrchr(prefix, '\\')) != NULL) {
+        while ((start = strrchr(ZSTR_VAL(prefix), '\\')) != NULL) {
             zval* value = NULL;
-            size_t pos = start - prefix;
+            size_t pos = start - ZSTR_VAL(prefix);
 
-            prefix[pos] = '\0';
-            strcpy(relative_class, ZSTR_VAL(className) + pos + 1);
+            ZSTR_VAL(prefix)[pos] = '\0';
+            ZSTR_LEN(prefix) = pos + 1;
+            strcpy(relative_class, ZSTR_VAL(&className) + pos + 1);
 
-            if (zend_hash_find(Z_ARRVAL_P(prefixes), prefix, pos + 1, (void **)&value) == SUCCESS) {
+            value = zend_hash_find(Z_ARRVAL_P(prefixes), prefix);
+            if (value != NULL) {
                 break;
             }
         }
 
-        if (prefix[0] == '\0') {
-            efree(prefix), prefix = NULL;
+        if (ZSTR_VAL(prefix)[0] == '\0') {
+            zend_string_free(prefix), prefix = NULL;
         }
 
         efree(relative_class), relative_class = NULL;
@@ -64,27 +78,28 @@ static zend_bool file_exists(const char* filename)
     return exist;
 }
 
-static char* get_filename(zval* this, const char* prefix, const zend_string className)
+static char* get_filename(zval* this, zend_string* prefix, const zend_string className)
 {
-    zval** value = NULL;
+    zval* value = NULL;
     zval* prefixes = NULL;
     char* filename = NULL;
 
-    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1);
+    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1, NULL);
 
-    if (zend_hash_find(Z_ARRVAL_P(prefixes), prefix, strlen(prefix) + 1, (void **)&value) == SUCCESS) {
+    value = zend_hash_find(Z_ARRVAL_P(prefixes), prefix);
+    if (value != NULL) {
         HashPosition pos;
-        zval** data = NULL;
+        zval* data = NULL;
 
         for (
-            zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(value), &pos);
-            zend_hash_get_current_data_ex(Z_ARRVAL_PP(value), (void**) &data, &pos) == SUCCESS;
-            zend_hash_move_forward_ex(Z_ARRVAL_PP(value), &pos)
+            zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(value), &pos);
+            data = zend_hash_get_current_data_ex(Z_ARRVAL_P(value), &pos);
+            zend_hash_move_forward_ex(Z_ARRVAL_P(value), &pos)
         ) {
-            const char* dirName = Z_STRVAL_PP(data);
+            const char* dirName = Z_STRVAL_P(data);
 
-            filename = ecalloc(sizeof(*filename), strlen(dirName) + ZSTR_LEN(className) + strlen(".php") + 2);
-            sprintf(filename, "%s/%s.php", dirName, ZSTR_VAL(className));
+            filename = ecalloc(sizeof(*filename), strlen(dirName) + ZSTR_LEN(&className) + strlen(".php") + 2);
+            sprintf(filename, "%s/%s.php", dirName, ZSTR_VAL(&className));
             str_replace(filename, '\\', '/');
             if (file_exists(filename)) {
                 break;
@@ -101,29 +116,26 @@ static char* get_filename(zval* this, const char* prefix, const zend_string clas
    Register loader with SPL autoloader stack. */
 static PHP_METHOD(Psr4, register)
 {
+    zval method;
     zval* this = NULL;
-    zval* method = NULL;
 
     this = getThis();
 
-    MAKE_STD_ZVAL(method);
-    array_init(method);
+    array_init(&method);
     Z_ADDREF_P(this);
 
-    add_next_index_zval(method, this);
-    add_next_index_string(method, estrdup("loadClass"), 0);
+    add_next_index_zval(&method, this);
+    add_next_index_string(&method, estrdup("loadClass"));
 
     {
         zval* retval = NULL;
-        zval** params[] = {&method};
+        zval params[] = {method};
 
         retval = psr_call_function("spl_autoload_register", params, 1);
         if (retval) {
-            zval_ptr_dtor(&retval), retval = NULL;
+            zval_ptr_dtor(retval), retval = NULL;
         }
     }
-
-    zval_ptr_dtor(&method), method = NULL;
 }
 /* }}} */
 
@@ -140,47 +152,44 @@ static PHP_METHOD(Psr4, addNamespace)
     }
 
     {
-        zval* zv = NULL;
         zval* this = NULL;
         zval* prefixes = NULL;
-        zval** zv_prefix = NULL;
+        zval* zv_prefix = NULL;
 
-        MAKE_STD_ZVAL(zv);
-        ZVAL_STR(zv, base_dir);
+        ZVAL_STR(&zv, &base_dir);
 
         this = getThis();
 
-        prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1);
+        prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1, NULL);
         if (Z_ARRVAL_P(prefixes) == NULL) {
-            MAKE_STD_ZVAL(prefixes);
             array_init(prefixes);
 
             zend_update_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), prefixes);
         }
 
-        if (zend_hash_find(Z_ARRVAL_P(prefixes), ZSTR_VAR(prefix), ZSTR_LEN(prefix) + 1, (void **)&zv_prefix) == SUCCESS) {
+        zv_prefix = zend_hash_find(Z_ARRVAL_P(prefixes), &prefix);
+        if (zv_prefix != NULL) {
             if (prepend) {
                 zval* retval = NULL;
-                zval** params[] = {zv_prefix, &zv};
+                zval params[] = {*zv_prefix, zv};
 
                 psr_call_function("array_unshift", params, 2);
                 if (retval) {
-                    zval_ptr_dtor(&retval), retval = NULL;
+                    zval_ptr_dtor(retval), retval = NULL;
                 }
             }
             else {
-                add_next_index_zval(*zv_prefix, zv);
+                add_next_index_zval(zv_prefix, &zv);
             }
         }
         else {
-            zval* value = NULL;
+            zval value;
 
-            MAKE_STD_ZVAL(value);
-            array_init(value);
+            array_init(&value);
 
-            add_next_index_zval(value, zv);
+            add_next_index_zval(&value, &zv);
 
-            add_assoc_zval(prefixes, ZSTR_VAR(prefix), value);
+            add_assoc_zval(prefixes, ZSTR_VAL(&prefix), &value);
         }
     }
 }
@@ -192,23 +201,25 @@ static PHP_METHOD(Psr4, loadClass)
 {
     int loaded = 0;
     zval* this = NULL;
-    char* prefix = NULL;
-    zend_string className;
+    zend_string fullName;
+    zend_string* prefix = NULL;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &className) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &fullName) == FAILURE) {
         RETURN_FALSE;
     }
 
     this = getThis();
-    prefix = get_prefix(this, className);
+    prefix = get_prefix(this, fullName);
 
     if (prefix != NULL) {
         char* filename = NULL;
+        zend_string* className = NULL;
 
-        className += strlen(prefix) + 1;
+        className = psr_zend_string_sub(&fullName, ZSTR_LEN(prefix) + 1);
 
-        filename = get_filename(this, prefix, className);
-        efree(prefix), prefix = NULL;
+        filename = get_filename(this, prefix, *className);
+        zend_string_free(prefix), prefix = NULL;
+        zend_string_free(className), className = NULL;
 
         if (filename != NULL) {
             psr_require(filename);
