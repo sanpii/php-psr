@@ -20,7 +20,7 @@ static zval* psr_autoloader_psr0_getter(const char* property, size_t property_le
 
     this = getThis();
 
-    value = zend_read_property(ce_psr_autoloader_psr0, this, property, property_length, 1 TSRMLS_CC);
+    value = zend_read_property(ce_psr_autoloader_psr0, this, property, property_length, 1);
 
     return value;
 }
@@ -30,7 +30,7 @@ static void psr_autoloader_psr0_setter(const char* property, size_t property_len
     zval* this = NULL;
     zval* value = NULL;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &value) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "z", &value) == FAILURE) {
         return;
     }
 
@@ -50,9 +50,9 @@ static char* get_filename(zval* this, const zend_string className)
 
     MAKE_STD_ZVAL(ns);
 
-    includePath = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("includePath"), 1 TSRMLS_CC);
-    fileExtension = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("fileExtension"), 1 TSRMLS_CC);
-    namespaceSeparator = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("namespaceSeparator"), 1 TSRMLS_CC);
+    includePath = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("includePath"), 1);
+    fileExtension = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("fileExtension"), 1);
+    namespaceSeparator = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("namespaceSeparator"), 1);
 
     lastPos = strrchr(ZSTR_VAL(className), Z_STRVAL_P(namespaceSeparator)[0]);
     if (lastPos != NULL) {
@@ -158,7 +158,7 @@ static PHP_METHOD(Psr0, register)
     MAKE_STD_ZVAL(prepend);
     ZVAL_FALSE(prepend);
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &Z_LVAL_P(prepend)) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|z", &Z_LVAL_P(prepend)) == FAILURE) {
         zval_ptr_dtor(&prepend), prepend = NULL;
         RETURN_FALSE;
     }
@@ -221,7 +221,7 @@ static PHP_METHOD(Psr0, findFile)
     char* filename = NULL;
     zend_string className;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S", &className) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &className) == FAILURE) {
         RETURN_FALSE;
     }
 
@@ -248,7 +248,7 @@ static PHP_METHOD(Psr0, loadClass)
     char* filename = NULL;
     zend_string className;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S", &className) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &className) == FAILURE) {
         return;
     }
 
@@ -290,7 +290,7 @@ PHP_MINIT_FUNCTION(psr0)
     zend_class_entry ce;
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Autoloader", "Psr0", autoloader_psr0_class_functions);
-    ce_psr_autoloader_psr0 = zend_register_internal_class(&ce TSRMLS_CC);
+    ce_psr_autoloader_psr0 = zend_register_internal_class(&ce);
 
     zend_declare_property_string(ce_psr_autoloader_psr0, ZEND_STRL("namespaceSeparator"), "\\", ZEND_ACC_PRIVATE);
     zend_declare_property_null(ce_psr_autoloader_psr0, ZEND_STRL("includePath"), ZEND_ACC_PRIVATE);

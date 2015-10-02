@@ -12,7 +12,7 @@ static char* get_prefix(zval* this, const zend_string className)
     char* prefix = NULL;
     zval* prefixes = NULL;
 
-    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1 TSRMLS_CC);
+    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1);
     if (Z_ARRVAL_P(prefixes) != NULL) {
         char* start = NULL;
         char* relative_class = NULL;
@@ -70,7 +70,7 @@ static char* get_filename(zval* this, const char* prefix, const zend_string clas
     zval* prefixes = NULL;
     char* filename = NULL;
 
-    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1 TSRMLS_CC);
+    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1);
 
     if (zend_hash_find(Z_ARRVAL_P(prefixes), prefix, strlen(prefix) + 1, (void **)&value) == SUCCESS) {
         HashPosition pos;
@@ -135,7 +135,7 @@ static PHP_METHOD(Psr4, addNamespace)
     zend_string prefix;
     zend_string base_dir;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "SS|b", &prefix, &base_dir, &prepend) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "SS|b", &prefix, &base_dir, &prepend) == FAILURE) {
         return;
     }
 
@@ -150,7 +150,7 @@ static PHP_METHOD(Psr4, addNamespace)
 
         this = getThis();
 
-        prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1 TSRMLS_CC);
+        prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1);
         if (Z_ARRVAL_P(prefixes) == NULL) {
             MAKE_STD_ZVAL(prefixes);
             array_init(prefixes);
@@ -195,7 +195,7 @@ static PHP_METHOD(Psr4, loadClass)
     char* prefix = NULL;
     zend_string className;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S", &className) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &className) == FAILURE) {
         RETURN_FALSE;
     }
 
@@ -244,7 +244,7 @@ PHP_MINIT_FUNCTION(psr4)
     zend_class_entry ce;
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Autoloader", "Psr4", autoloader_psr4_class_functions);
-    ce_psr_autoloader_psr4 = zend_register_internal_class(&ce TSRMLS_CC);
+    ce_psr_autoloader_psr4 = zend_register_internal_class(&ce);
 
     zend_declare_property_null(ce_psr_autoloader_psr4, ZEND_STRL("prefixes"), ZEND_ACC_PRIVATE);
 

@@ -255,28 +255,28 @@ PHP_MINIT_FUNCTION(psr7)
 
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Http\\Message", "MessageInterface", messageInterface_class_functions);
-    ce_psr_http_message_messageInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+    ce_psr_http_message_messageInterface = zend_register_internal_interface(&ce);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Http\\Message", "RequestInterface", requestInterface_class_functions);
-    ce_psr_http_message_requestInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+    ce_psr_http_message_requestInterface = zend_register_internal_interface(&ce);
     zend_class_implements(ce_psr_http_message_requestInterface, 1, ce_psr_http_message_messageInterface);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Http\\Message", "ServerRequestInterface", serverRequestInterface_class_functions);
-    ce_psr_http_message_serverRequestInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+    ce_psr_http_message_serverRequestInterface = zend_register_internal_interface(&ce);
     zend_class_implements(ce_psr_http_message_serverRequestInterface, 1, ce_psr_http_message_requestInterface);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Http\\Message", "ResponseInterface", responseInterface_class_functions);
-    ce_psr_http_message_responseInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+    ce_psr_http_message_responseInterface = zend_register_internal_interface(&ce);
     zend_class_implements(ce_psr_http_message_responseInterface, 1, ce_psr_http_message_messageInterface);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Http\\Message", "StreamInterface", streamInterface_class_functions);
-    zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_register_internal_interface(&ce);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Http\\Message", "UriInterface", uriInterface_class_functions);
-    zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_register_internal_interface(&ce);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Http\\Message", "UploadedFileInterface", uploadedFileInterface_class_functions);
-    zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_register_internal_interface(&ce);
 
     return SUCCESS;
 }

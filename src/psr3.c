@@ -48,13 +48,13 @@ PHP_MINIT_FUNCTION(psr3)
     zend_class_entry *ce_psr_logLevel;
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Log", "LoggerInterface", loggerInterface_class_functions);
-    zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_register_internal_interface(&ce);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Log", "LoggerAwareInterface", loggerAwareInterface_class_functions);
-    zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_register_internal_interface(&ce);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Log", "LogLevel", NULL);
-    ce_psr_logLevel = zend_register_internal_class(&ce TSRMLS_CC);
+    ce_psr_logLevel = zend_register_internal_class(&ce);
     zend_declare_class_constant_string(ce_psr_logLevel, ZEND_STRL("EMERGENCY"), "emergency");
     zend_declare_class_constant_string(ce_psr_logLevel, ZEND_STRL("ALERT"), "alert");
     zend_declare_class_constant_string(ce_psr_logLevel, ZEND_STRL("CRITICAL"), "critical");
