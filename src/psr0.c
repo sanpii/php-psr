@@ -39,7 +39,7 @@ static void psr_autoloader_psr0_setter(const char* property, size_t property_len
     zend_update_property(ce_psr_autoloader_psr0, this, property, property_length, value);
 }
 
-static char* get_filename(zval* this, const char* className)
+static char* get_filename(zval* this, const zend_string className)
 {
     zval* ns = NULL;
     char* lastPos = NULL;
@@ -54,14 +54,14 @@ static char* get_filename(zval* this, const char* className)
     fileExtension = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("fileExtension"), 1 TSRMLS_CC);
     namespaceSeparator = zend_read_property(ce_psr_autoloader_psr0, this, ZEND_STRL("namespaceSeparator"), 1 TSRMLS_CC);
 
-    lastPos = strrchr(className, Z_STRVAL_P(namespaceSeparator)[0]);
+    lastPos = strrchr(ZSTR_VAL(className), Z_STRVAL_P(namespaceSeparator)[0]);
     if (lastPos != NULL) {
         int i;
         const char* basename = NULL;
         const char* dirname = NULL;
 
         lastPos[0] = '\0';
-        dirname = className;
+        dirname = ZSTR_VAL(className);
 
         for (i = 1; lastPos[i]; i++) {
             if (lastPos[i] == Z_STRVAL_P(namespaceSeparator)[0]) {
@@ -218,11 +218,10 @@ static PHP_METHOD(Psr0, unregister)
 static PHP_METHOD(Psr0, findFile)
 {
     zval* this = NULL;
-    char* className = NULL;
     char* filename = NULL;
-    size_t className_length;
+    zend_string className;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &className, &className_length) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S", &className) == FAILURE) {
         RETURN_FALSE;
     }
 
@@ -247,10 +246,9 @@ static PHP_METHOD(Psr0, loadClass)
 {
     zval* this = NULL;
     char* filename = NULL;
-    char* className = NULL;
-    size_t className_length;
+    zend_string className;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &className, &className_length) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S", &className) == FAILURE) {
         return;
     }
 

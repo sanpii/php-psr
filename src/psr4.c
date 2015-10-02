@@ -7,7 +7,7 @@
 
 static zend_class_entry *ce_psr_autoloader_psr4;
 
-static char* get_prefix(zval* this, const char* className)
+static char* get_prefix(zval* this, const zend_string className)
 {
     char* prefix = NULL;
     zval* prefixes = NULL;
@@ -17,15 +17,15 @@ static char* get_prefix(zval* this, const char* className)
         char* start = NULL;
         char* relative_class = NULL;
 
-        prefix = estrdup(className);
-        relative_class = ecalloc(sizeof(*relative_class), strlen(className) + 1);
+        prefix = estrdup(ZSTR_VAL(className));
+        relative_class = ecalloc(sizeof(*relative_class), ZSTR_LEN(className) + 1);
 
         while ((start = strrchr(prefix, '\\')) != NULL) {
             zval* value = NULL;
             size_t pos = start - prefix;
 
             prefix[pos] = '\0';
-            strcpy(relative_class, className + pos + 1);
+            strcpy(relative_class, ZSTR_VAL(className) + pos + 1);
 
             if (zend_hash_find(Z_ARRVAL_P(prefixes), prefix, pos + 1, (void **)&value) == SUCCESS) {
                 break;
@@ -64,7 +64,7 @@ static zend_bool file_exists(const char* filename)
     return exist;
 }
 
-static char* get_filename(zval* this, const char* prefix, const char* className)
+static char* get_filename(zval* this, const char* prefix, const zend_string className)
 {
     zval** value = NULL;
     zval* prefixes = NULL;
@@ -83,8 +83,8 @@ static char* get_filename(zval* this, const char* prefix, const char* className)
         ) {
             const char* dirName = Z_STRVAL_PP(data);
 
-            filename = ecalloc(sizeof(*filename), strlen(dirName) + strlen(className) + strlen(".php") + 2);
-            sprintf(filename, "%s/%s.php", dirName, className);
+            filename = ecalloc(sizeof(*filename), strlen(dirName) + ZSTR_LEN(className) + strlen(".php") + 2);
+            sprintf(filename, "%s/%s.php", dirName, ZSTR_VAL(className));
             str_replace(filename, '\\', '/');
             if (file_exists(filename)) {
                 break;
@@ -131,13 +131,11 @@ static PHP_METHOD(Psr4, register)
    Adds a base directory for a namespace prefix. */
 static PHP_METHOD(Psr4, addNamespace)
 {
-    char* prefix = NULL;
-    size_t prefix_length;
-    char* base_dir = NULL;
-    size_t base_dir_length;
     zend_bool prepend = 0;
+    zend_string prefix;
+    zend_string base_dir;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|b", &prefix, &prefix_length, &base_dir, &base_dir_length, &prepend) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "SS|b", &prefix, &base_dir, &prepend) == FAILURE) {
         return;
     }
 
@@ -148,7 +146,7 @@ static PHP_METHOD(Psr4, addNamespace)
         zval** zv_prefix = NULL;
 
         MAKE_STD_ZVAL(zv);
-        ZVAL_STRING(zv, base_dir, 1);
+        ZVAL_STR(zv, base_dir);
 
         this = getThis();
 
@@ -160,7 +158,7 @@ static PHP_METHOD(Psr4, addNamespace)
             zend_update_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), prefixes);
         }
 
-        if (zend_hash_find(Z_ARRVAL_P(prefixes), prefix, strlen(prefix) + 1, (void **)&zv_prefix) == SUCCESS) {
+        if (zend_hash_find(Z_ARRVAL_P(prefixes), ZSTR_VAR(prefix), ZSTR_LEN(prefix) + 1, (void **)&zv_prefix) == SUCCESS) {
             if (prepend) {
                 zval* retval = NULL;
                 zval** params[] = {zv_prefix, &zv};
@@ -182,7 +180,7 @@ static PHP_METHOD(Psr4, addNamespace)
 
             add_next_index_zval(value, zv);
 
-            add_assoc_zval(prefixes, prefix, value);
+            add_assoc_zval(prefixes, ZSTR_VAR(prefix), value);
         }
     }
 }
@@ -192,12 +190,12 @@ static PHP_METHOD(Psr4, addNamespace)
    Loads the class file for a given class name. */
 static PHP_METHOD(Psr4, loadClass)
 {
+    int loaded = 0;
     zval* this = NULL;
     char* prefix = NULL;
-    char* className = NULL;
-    size_t className_length;
+    zend_string className;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &className, &className_length) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S", &className) == FAILURE) {
         RETURN_FALSE;
     }
 
@@ -216,11 +214,11 @@ static PHP_METHOD(Psr4, loadClass)
             psr_require(filename);
             efree(filename), filename = NULL;
 
-            RETURN_TRUE;
+            loaded = 1;
         }
     }
 
-    RETURN_FALSE;
+    RETURN_BOOL(loaded);
 }
 /* }}} */
 
