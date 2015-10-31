@@ -67,7 +67,7 @@ zval* psr_call_function(const char* name, zval** params[], int param_count)
     zend_fcall_info finfo;
     zend_fcall_info_cache fcache;
 
-    ZVAL_STRING(&fname, name, 0);
+    ZVAL_STRING(&fname, name);
     if (zend_fcall_info_init(&fname, IS_CALLABLE_STRICT, &finfo, &fcache, NULL, NULL) == FAILURE) {
         php_error_docref(NULL, E_WARNING, "WTF??? Can't find the spl_autoload_register() function!");
         return retval;
