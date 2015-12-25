@@ -94,6 +94,24 @@ static zend_bool file_exists(const char* filename)
     return exist;
 }
 
+static int find_file_callback(zval* data, int num_args, va_list ap, zend_hash_key *key)
+{
+    const char* dirName = Z_STRVAL_P(data);
+    char** filename = va_arg(ap, char**);
+    zend_string* className = va_arg(ap, zend_string*);
+
+    *filename = ecalloc(sizeof(**filename), strlen(dirName) + ZSTR_LEN(className) + strlen(".php") + 2);
+    sprintf(*filename, "%s/%s.php", dirName, ZSTR_VAL(className));
+    str_replace(*filename, '\\', '/');
+    if (file_exists(*filename)) {
+        return ZEND_HASH_APPLY_STOP;
+    }
+    else {
+        efree(*filename), *filename = NULL;
+        return ZEND_HASH_APPLY_KEEP;
+    }
+}
+
 static char* get_filename(zval* this, zend_string* prefix, zend_string* className)
 {
     zval* value = NULL;
@@ -104,24 +122,7 @@ static char* get_filename(zval* this, zend_string* prefix, zend_string* classNam
 
     value = zend_hash_find(Z_ARRVAL_P(prefixes), prefix);
     if (value != NULL) {
-        HashPosition pos;
-        zval* data = NULL;
-
-        for (
-            zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(value), &pos);
-            data = zend_hash_get_current_data_ex(Z_ARRVAL_P(value), &pos);
-            zend_hash_move_forward_ex(Z_ARRVAL_P(value), &pos)
-        ) {
-            const char* dirName = Z_STRVAL_P(data);
-
-            filename = ecalloc(sizeof(*filename), strlen(dirName) + ZSTR_LEN(&className) + strlen(".php") + 2);
-            sprintf(filename, "%s/%s.php", dirName, ZSTR_VAL(&className));
-            str_replace(filename, '\\', '/');
-            if (file_exists(filename)) {
-                break;
-            }
-            efree(filename), filename = NULL;
-        }
+        zend_hash_apply_with_arguments(Z_ARRVAL_P(value), find_file_callback, 2, &filename, className);
     }
 
     return filename;
