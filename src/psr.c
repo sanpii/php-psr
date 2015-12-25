@@ -62,16 +62,19 @@ void psr_require(const char* filename)
 
 zval* psr_call_function(const char* name, zval params[], int param_count)
 {
-    zval fname;
     zval* retval = NULL;
     zend_fcall_info finfo;
     zend_fcall_info_cache fcache;
 
-    ZVAL_STRING(&fname, name);
-    if (zend_fcall_info_init(&fname, IS_CALLABLE_STRICT, &finfo, &fcache, NULL, NULL) == FAILURE) {
-        php_error_docref(NULL, E_WARNING, "WTF??? Can't find the spl_autoload_register() function!");
-        return retval;
+    {
+        zval fname;
+
+        ZVAL_STRING(&fname, name);
+        zend_fcall_info_init(&fname, IS_CALLABLE_STRICT, &finfo, &fcache, NULL, NULL);
+        zval_dtor(&fname);
     }
+
+    retval = emalloc(sizeof(*retval));
 
     finfo.param_count = param_count;
     finfo.params = params;

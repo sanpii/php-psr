@@ -148,13 +148,12 @@ static PHP_METHOD(Psr0, getFileExtension)
 static PHP_METHOD(Psr0, register)
 {
     zval method;
-    zval prepend;
+    int prepend = 0;
+    zval zv_prepend;
     zval do_throw;
     zval* this = NULL;
 
-    ZVAL_FALSE(&prepend);
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|z", &Z_LVAL(prepend)) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|b", &prepend) == FAILURE) {
         RETURN_FALSE;
     }
 
@@ -164,19 +163,24 @@ static PHP_METHOD(Psr0, register)
     Z_ADDREF_P(this);
 
     add_next_index_zval(&method, this);
-    add_next_index_string(&method, estrdup("loadClass"));
+    add_next_index_string(&method, "loadClass");
 
     ZVAL_FALSE(&do_throw);
+    ZVAL_BOOL(&zv_prepend, prepend);
 
     {
         zval* retval = NULL;
-        zval params[] = {method, do_throw, prepend};
+        zval params[] = {method, do_throw, zv_prepend};
 
         retval = psr_call_function("spl_autoload_register", params, 3);
-        if (retval) {
-            zval_ptr_dtor(retval);
+        if (retval != NULL) {
+            zval_dtor(retval);
+            efree(retval), retval = NULL;
         }
     }
+    zval_dtor(&method);
+    zval_dtor(&zv_prepend);
+    zval_dtor(&do_throw);
 }
 /* }}} */
 
@@ -193,9 +197,11 @@ static PHP_METHOD(Psr0, unregister)
     Z_ADDREF_P(this);
 
     add_next_index_zval(&method, this);
-    add_next_index_string(&method, estrdup("loadClass"));
+    add_next_index_string(&method, "loadClass");
 
     zend_call_method_with_1_params(NULL, NULL, NULL, "spl_autoload_unregister", NULL, &method);
+
+    zval_dtor(&method);
 }
 /* }}} */
 
