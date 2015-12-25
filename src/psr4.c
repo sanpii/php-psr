@@ -58,7 +58,9 @@ static zend_string* get_prefix(zval* this, zend_string className)
 
 static void str_replace(char* subject, char search, char replace)
 {
-    for (int i = 0; i < strlen(subject); i++) {
+    int i;
+
+    for (i = 0; i < strlen(subject); i++) {
         if (subject[i] == search) {
             subject[i] = replace;
         }
