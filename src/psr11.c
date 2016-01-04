@@ -28,6 +28,9 @@ PHP_MINIT_FUNCTION(psr11)
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Container", "ContainerInterface", containerInterface_class_fuctions);
     zend_register_internal_interface(&ce TSRMLS_CC);
 
+    INIT_NS_CLASS_ENTRY(ce, "Psr\\Container", "ContainerExceptionInterface", NULL);
+    zend_register_internal_interface(&ce TSRMLS_CC);
+
     return SUCCESS;
 }
 /* }}} */
