@@ -10,6 +10,7 @@
 #include "psr4.h"
 #include "psr6.h"
 #include "psr7.h"
+#include "psr11.h"
 
 /* {{{ PHP_MINIT_FUNCTION
  */
@@ -20,6 +21,7 @@ static PHP_MINIT_FUNCTION(psr)
     PHP_MINIT(psr4)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(psr6)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(psr7)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(psr11)(INIT_FUNC_ARGS_PASSTHRU);
     return SUCCESS;
 }
 /* }}} */
