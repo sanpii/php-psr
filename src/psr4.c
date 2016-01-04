@@ -7,36 +7,64 @@
 
 static zend_class_entry *ce_psr_autoloader_psr4;
 
-static char* get_prefix(zval* this, const char* className)
+static void array_unshift_str(zval* array, zend_string* str)
 {
-    char* prefix = NULL;
-    zval* prefixes = NULL;
+    zval params[2];
+    zval new_element;
+    zval* retval = NULL;
 
-    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1 TSRMLS_CC);
+    ZVAL_STR(&new_element, str);
+    params[0] = *array;
+    params[1] = new_element;
+
+    ZVAL_MAKE_REF(&params[0]);
+    retval = psr_call_function("array_unshift", params, 2);
+    ZVAL_UNREF(&params[0]);
+    if (retval) {
+        zval_dtor(retval);
+        efree(retval), retval = NULL;
+    }
+}
+
+static zend_string* psr_zend_string_sub(zend_string *s, size_t start)
+{
+    size_t len;
+    zend_string *ret;
+
+    len = ZSTR_LEN(s) - start;
+    ret = zend_string_alloc(len, 0);
+    memcpy(ZSTR_VAL(ret), s->val + start, len + 1);
+
+    return ret;
+}
+
+static zend_string* get_prefix(zval* this, zend_string* className)
+{
+    zval* prefixes = NULL;
+    zend_string* prefix = NULL;
+
+    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1, NULL);
     if (Z_ARRVAL_P(prefixes) != NULL) {
         char* start = NULL;
-        char* relative_class = NULL;
 
-        prefix = estrdup(className);
-        relative_class = ecalloc(sizeof(*relative_class), strlen(className) + 1);
+        prefix = zend_string_dup(className, 0);
 
-        while ((start = strrchr(prefix, '\\')) != NULL) {
+        while ((start = strrchr(ZSTR_VAL(prefix), '\\')) != NULL) {
             zval* value = NULL;
-            size_t pos = start - prefix;
+            size_t pos = start - ZSTR_VAL(prefix);
 
-            prefix[pos] = '\0';
-            strcpy(relative_class, className + pos + 1);
+            ZSTR_VAL(prefix)[pos] = '\0';
+            prefix = zend_string_truncate(prefix, pos, 0);
 
-            if (zend_hash_find(Z_ARRVAL_P(prefixes), prefix, pos + 1, (void **)&value) == SUCCESS) {
+            value = zend_hash_find(Z_ARRVAL_P(prefixes), prefix);
+            if (value != NULL) {
                 break;
             }
         }
 
-        if (prefix[0] == '\0') {
-            efree(prefix), prefix = NULL;
+        if (ZSTR_VAL(prefix)[0] == '\0') {
+            zend_string_free(prefix), prefix = NULL;
         }
-
-        efree(relative_class), relative_class = NULL;
     }
 
     return prefix;
@@ -44,7 +72,9 @@ static char* get_prefix(zval* this, const char* className)
 
 static void str_replace(char* subject, char search, char replace)
 {
-    for (int i = 0; i < strlen(subject); i++) {
+    int i;
+
+    for (i = 0; i < strlen(subject); i++) {
         if (subject[i] == search) {
             subject[i] = replace;
         }
@@ -64,66 +94,68 @@ static zend_bool file_exists(const char* filename)
     return exist;
 }
 
-static char* get_filename(zval* this, const char* prefix, const char* className)
+static int find_file_callback(zval* data, int num_args, va_list ap, zend_hash_key *key)
 {
-    zval** value = NULL;
+    const char* dirName = Z_STRVAL_P(data);
+    char** filename = va_arg(ap, char**);
+    zend_string* className = va_arg(ap, zend_string*);
+
+    *filename = ecalloc(sizeof(**filename), strlen(dirName) + ZSTR_LEN(className) + strlen(".php") + 2);
+    sprintf(*filename, "%s/%s.php", dirName, ZSTR_VAL(className));
+    str_replace(*filename, '\\', '/');
+    if (file_exists(*filename)) {
+        return ZEND_HASH_APPLY_STOP;
+    }
+    else {
+        efree(*filename), *filename = NULL;
+        return ZEND_HASH_APPLY_KEEP;
+    }
+}
+
+static char* get_filename(zval* this, zend_string* prefix, zend_string* className)
+{
+    zval* value = NULL;
     zval* prefixes = NULL;
     char* filename = NULL;
 
-    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1 TSRMLS_CC);
+    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1, NULL);
 
-    if (zend_hash_find(Z_ARRVAL_P(prefixes), prefix, strlen(prefix) + 1, (void **)&value) == SUCCESS) {
-        HashPosition pos;
-        zval** data = NULL;
-
-        for (
-            zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(value), &pos);
-            zend_hash_get_current_data_ex(Z_ARRVAL_PP(value), (void**) &data, &pos) == SUCCESS;
-            zend_hash_move_forward_ex(Z_ARRVAL_PP(value), &pos)
-        ) {
-            const char* dirName = Z_STRVAL_PP(data);
-
-            filename = ecalloc(sizeof(*filename), strlen(dirName) + strlen(className) + strlen(".php") + 2);
-            sprintf(filename, "%s/%s.php", dirName, className);
-            str_replace(filename, '\\', '/');
-            if (file_exists(filename)) {
-                break;
-            }
-            efree(filename), filename = NULL;
-        }
+    value = zend_hash_find(Z_ARRVAL_P(prefixes), prefix);
+    if (value != NULL) {
+        zend_hash_apply_with_arguments(Z_ARRVAL_P(value), find_file_callback, 2, &filename, className);
     }
 
     return filename;
 }
 
-/* {{{ class Psr\Autoloader\Psr0 */
+/* {{{ class Psr\Autoloader\Psr4 */
 /* {{{ public void register()
    Register loader with SPL autoloader stack. */
 static PHP_METHOD(Psr4, register)
 {
+    zval method;
     zval* this = NULL;
-    zval* method = NULL;
 
     this = getThis();
 
-    MAKE_STD_ZVAL(method);
-    array_init(method);
+    array_init(&method);
     Z_ADDREF_P(this);
 
-    add_next_index_zval(method, this);
-    add_next_index_string(method, estrdup("loadClass"), 0);
+    add_next_index_zval(&method, this);
+    add_next_index_string(&method, "loadClass");
 
     {
         zval* retval = NULL;
-        zval** params[] = {&method};
+        zval params[] = {method};
 
         retval = psr_call_function("spl_autoload_register", params, 1);
+        zval_dtor(&method);
+
         if (retval) {
-            zval_ptr_dtor(&retval), retval = NULL;
+            zval_dtor(retval);
+            efree(retval), retval = NULL;
         }
     }
-
-    zval_ptr_dtor(&method), method = NULL;
 }
 /* }}} */
 
@@ -131,58 +163,41 @@ static PHP_METHOD(Psr4, register)
    Adds a base directory for a namespace prefix. */
 static PHP_METHOD(Psr4, addNamespace)
 {
-    char* prefix = NULL;
-    size_t prefix_length;
-    char* base_dir = NULL;
-    size_t base_dir_length;
     zend_bool prepend = 0;
+    zend_string* prefix = NULL;
+    zend_string* base_dir = NULL;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|b", &prefix, &prefix_length, &base_dir, &base_dir_length, &prepend) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "SS|b", &prefix, &base_dir, &prepend) == FAILURE) {
         return;
     }
 
+    base_dir = zend_string_dup(base_dir, 1);
+
     {
-        zval* zv = NULL;
         zval* this = NULL;
         zval* prefixes = NULL;
-        zval** zv_prefix = NULL;
-
-        MAKE_STD_ZVAL(zv);
-        ZVAL_STRING(zv, base_dir, 1);
+        zval* zv_prefix = NULL;
 
         this = getThis();
 
-        prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1 TSRMLS_CC);
-        if (Z_ARRVAL_P(prefixes) == NULL) {
-            MAKE_STD_ZVAL(prefixes);
-            array_init(prefixes);
+        prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1, NULL);
 
-            zend_update_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), prefixes);
-        }
-
-        if (zend_hash_find(Z_ARRVAL_P(prefixes), prefix, strlen(prefix) + 1, (void **)&zv_prefix) == SUCCESS) {
+        zv_prefix = zend_hash_find(Z_ARRVAL_P(prefixes), prefix);
+        if (zv_prefix != NULL) {
             if (prepend) {
-                zval* retval = NULL;
-                zval** params[] = {zv_prefix, &zv};
-
-                psr_call_function("array_unshift", params, 2);
-                if (retval) {
-                    zval_ptr_dtor(&retval), retval = NULL;
-                }
+                array_unshift_str(zv_prefix, base_dir);
             }
             else {
-                add_next_index_zval(*zv_prefix, zv);
+                add_next_index_str(zv_prefix, base_dir);
             }
         }
         else {
-            zval* value = NULL;
+            zval value;
 
-            MAKE_STD_ZVAL(value);
-            array_init(value);
+            array_init(&value);
+            add_next_index_str(&value, base_dir);
 
-            add_next_index_zval(value, zv);
-
-            add_assoc_zval(prefixes, prefix, value);
+            add_assoc_zval(prefixes, ZSTR_VAL(prefix), &value);
         }
     }
 }
@@ -192,35 +207,50 @@ static PHP_METHOD(Psr4, addNamespace)
    Loads the class file for a given class name. */
 static PHP_METHOD(Psr4, loadClass)
 {
+    int loaded = 0;
     zval* this = NULL;
-    char* prefix = NULL;
-    char* className = NULL;
-    size_t className_length;
+    zend_string* prefix = NULL;
+    zend_string* fullName = NULL;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &className, &className_length) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &fullName) == FAILURE) {
         RETURN_FALSE;
     }
 
     this = getThis();
-    prefix = get_prefix(this, className);
+    prefix = get_prefix(this, fullName);
 
     if (prefix != NULL) {
         char* filename = NULL;
+        zend_string* className = NULL;
 
-        className += strlen(prefix) + 1;
+        className = psr_zend_string_sub(fullName, ZSTR_LEN(prefix));
 
         filename = get_filename(this, prefix, className);
-        efree(prefix), prefix = NULL;
+        zend_string_free(prefix), prefix = NULL;
+        zend_string_free(className), className = NULL;
 
         if (filename != NULL) {
             psr_require(filename);
             efree(filename), filename = NULL;
 
-            RETURN_TRUE;
+            loaded = 1;
         }
     }
 
-    RETURN_FALSE;
+    RETURN_BOOL(loaded);
+}
+/* }}} */
+
+/* {{{ public void __construct() */
+static PHP_METHOD(Psr4, __construct)
+{
+    zval* this = NULL;
+    zval* prefixes = NULL;
+
+    this = getThis();
+
+    prefixes = zend_read_property(ce_psr_autoloader_psr4, this, ZEND_STRL("prefixes"), 1, NULL);
+    array_init(prefixes);
 }
 /* }}} */
 
@@ -232,6 +262,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_autoloader_psr4_addNamespace, 0, ZEND_RETURN_VALU
 ZEND_END_ARG_INFO()
 
 static zend_function_entry autoloader_psr4_class_functions[] = {
+    PHP_ME(Psr4, __construct, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Psr4, register, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Psr4, addNamespace, arginfo_autoloader_psr4_addNamespace, ZEND_ACC_PUBLIC)
     PHP_ME(Psr4, loadClass, NULL, ZEND_ACC_PUBLIC)
@@ -246,7 +277,7 @@ PHP_MINIT_FUNCTION(psr4)
     zend_class_entry ce;
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Autoloader", "Psr4", autoloader_psr4_class_functions);
-    ce_psr_autoloader_psr4 = zend_register_internal_class(&ce TSRMLS_CC);
+    ce_psr_autoloader_psr4 = zend_register_internal_class(&ce);
 
     zend_declare_property_null(ce_psr_autoloader_psr4, ZEND_STRL("prefixes"), ZEND_ACC_PRIVATE);
 

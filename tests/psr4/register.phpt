@@ -20,7 +20,8 @@ array(2) {
     [0]=>
     object(Psr\Autoloader\Psr4)#2 (1) {
       ["prefixes":"Psr\Autoloader\Psr4":private]=>
-      NULL
+      array(0) {
+      }
     }
     [1]=>
     string(9) "loadClass"
