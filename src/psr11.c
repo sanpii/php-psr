@@ -24,12 +24,18 @@ static zend_function_entry containerInterface_class_fuctions[] = {
 PHP_MINIT_FUNCTION(psr11)
 {
     zend_class_entry ce;
+    zend_class_entry *containerException = NULL;
+    zend_class_entry *notFoundException = NULL;
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Container", "ContainerInterface", containerInterface_class_fuctions);
     zend_register_internal_interface(&ce TSRMLS_CC);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Container", "ContainerExceptionInterface", NULL);
-    zend_register_internal_interface(&ce TSRMLS_CC);
+    containerException = zend_register_internal_interface(&ce TSRMLS_CC);
+
+    INIT_NS_CLASS_ENTRY(ce, "Psr\\Container", "NotFoundExceptionInterface", NULL);
+    notFoundException = zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_class_implements(notFoundException, 1, containerException);
 
     return SUCCESS;
 }
