@@ -76,7 +76,7 @@ PHP_MINIT_FUNCTION(psr6)
 {
     zend_class_entry ce;
     zend_class_entry *cacheException = NULL;
-    zend_class_entry *InvalidArgumentException = NULL;
+    zend_class_entry *invalidArgumentException = NULL;
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Cache", "CacheItemInterface", cacheItemInterface_class_fuctions);
     zend_register_internal_interface(&ce TSRMLS_CC);
@@ -88,8 +88,8 @@ PHP_MINIT_FUNCTION(psr6)
     cacheException = zend_register_internal_interface(&ce TSRMLS_CC);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Cache", "InvalidArgumentException", NULL);
-    InvalidArgumentException = zend_register_internal_interface(&ce TSRMLS_CC);
-    zend_class_implements(InvalidArgumentException, 1, cacheException);
+    invalidArgumentException = zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_class_implements(invalidArgumentException, 1, cacheException);
 
     return SUCCESS;
 }
