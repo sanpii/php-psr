@@ -58,12 +58,30 @@ static zend_function_entry linkCollectionInterface_class_fuctions[] = {
 };
 /* }}} */
 
+/* {{{ interface Psr\Link\EvolvableLinkCollectionInterface */
+ZEND_BEGIN_ARG_INFO(arginfo_evolvableLinkCollectionInterface_withLink, 0)
+    ZEND_ARG_OBJ_INFO(0, link, Psr\\Link\\LinkInterface, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_evolvableLinkCollectionInterface_withoutLink, 0)
+    ZEND_ARG_OBJ_INFO(0, link, Psr\\Link\\LinkInterface, 0)
+ZEND_END_ARG_INFO()
+
+static zend_function_entry evolvableCollectionLinkInterface_class_fuctions[] = {
+    PHP_ABSTRACT_ME(EvolvableLinkCollectionInterface, withLink, arginfo_evolvableLinkCollectionInterface_withLink)
+    PHP_ABSTRACT_ME(EvolvableLinkCollectionInterface, withoutLink, arginfo_evolvableLinkCollectionInterface_withoutLink)
+    PHP_FE_END
+};
+/* }}} */
+
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(psr13)
 {
     zend_class_entry ce;
     zend_class_entry *linkInterface = NULL;
     zend_class_entry *evolvableLinkInterface = NULL;
+    zend_class_entry *linkCollectionInterface = NULL;
+    zend_class_entry *evolvableLinkCollectionInterface = NULL;
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Link", "LinkInterface", linkInterface_class_fuctions);
     linkInterface = zend_register_internal_interface(&ce TSRMLS_CC);
@@ -73,7 +91,11 @@ PHP_MINIT_FUNCTION(psr13)
     zend_class_implements(evolvableLinkInterface, 1, linkInterface);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Link", "LinkCollectionInterface", linkCollectionInterface_class_fuctions);
-    zend_register_internal_interface(&ce TSRMLS_CC);
+    linkCollectionInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+
+    INIT_NS_CLASS_ENTRY(ce, "Psr\\Link", "EvolvableLinkCollectionInterface", evolvableCollectionLinkInterface_class_fuctions);
+    evolvableLinkCollectionInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+    zend_class_implements(evolvableLinkCollectionInterface, 1, linkCollectionInterface);
 
     return SUCCESS;
 }
