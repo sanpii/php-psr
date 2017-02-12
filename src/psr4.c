@@ -47,7 +47,7 @@ static zend_string* get_prefix(zval* this, zend_string* className)
     if (Z_ARRVAL_P(prefixes) != NULL) {
         char* start = NULL;
 
-        prefix = zend_string_dup(className, 0);
+        prefix = zend_string_init(ZSTR_VAL(className), ZSTR_LEN(className), 0);
 
         while ((start = strrchr(ZSTR_VAL(prefix), '\\')) != NULL) {
             zval* value = NULL;
