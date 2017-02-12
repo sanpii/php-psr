@@ -10,14 +10,14 @@ echo ReflectionClass::export('\Psr\Log\LogLevel');
 Class [ <internal:psr> class Psr\Log\LogLevel ] {
 
   - Constants [8] {
-    Constant [ string EMERGENCY ] { emergency }
-    Constant [ string ALERT ] { alert }
-    Constant [ string CRITICAL ] { critical }
-    Constant [ string ERROR ] { error }
-    Constant [ string WARNING ] { warning }
-    Constant [ string NOTICE ] { notice }
-    Constant [ string INFO ] { info }
-    Constant [ string DEBUG ] { debug }
+    Constant [ public string EMERGENCY ] { emergency }
+    Constant [ public string ALERT ] { alert }
+    Constant [ public string CRITICAL ] { critical }
+    Constant [ public string ERROR ] { error }
+    Constant [ public string WARNING ] { warning }
+    Constant [ public string NOTICE ] { notice }
+    Constant [ public string INFO ] { info }
+    Constant [ public string DEBUG ] { debug }
   }
 
   - Static properties [0] {
