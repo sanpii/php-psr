@@ -58,6 +58,22 @@ static zend_function_entry linkProviderInterface_class_fuctions[] = {
 };
 /* }}} */
 
+/* {{{ interface Psr\Link\EvolvableLinkProviderInterface */
+ZEND_BEGIN_ARG_INFO(arginfo_evolvableLinkProviderInterface_withLink, 0)
+    ZEND_ARG_OBJ_INFO(0, link, Psr\\Link\\LinkInterface, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_evolvableLinkProviderInterface_withoutLink, 0)
+    ZEND_ARG_OBJ_INFO(0, link, Psr\\Link\\LinkInterface, 0)
+ZEND_END_ARG_INFO()
+
+static zend_function_entry evolvableLinkProviderInterface_class_fuctions[] = {
+    PHP_ABSTRACT_ME(EvolvableLinkProviderInterface, withLink, arginfo_evolvableLinkProviderInterface_withLink)
+    PHP_ABSTRACT_ME(EvolvableLinkProviderInterface, withoutLink, arginfo_evolvableLinkProviderInterface_withoutLink)
+    PHP_FE_END
+};
+/* }}} */
+
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(psr13)
 {
@@ -73,6 +89,9 @@ PHP_MINIT_FUNCTION(psr13)
     zend_class_implements(evolvableLinkInterface, 1, linkInterface);
 
     INIT_NS_CLASS_ENTRY(ce, "Psr\\Link", "LinkProviderInterface", linkProviderInterface_class_fuctions);
+    linkInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+
+    INIT_NS_CLASS_ENTRY(ce, "Psr\\Link", "EvolvableLinkProviderInterface", evolvableLinkProviderInterface_class_fuctions);
     linkInterface = zend_register_internal_interface(&ce TSRMLS_CC);
 
     return SUCCESS;
