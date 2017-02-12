@@ -11,6 +11,7 @@
 #include "psr6.h"
 #include "psr7.h"
 #include "psr13.h"
+#include "psr16.h"
 
 /* {{{ PHP_MINIT_FUNCTION
  */
@@ -22,6 +23,7 @@ static PHP_MINIT_FUNCTION(psr)
     PHP_MINIT(psr6)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(psr7)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(psr13)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(psr16)(INIT_FUNC_ARGS_PASSTHRU);
     return SUCCESS;
 }
 /* }}} */
